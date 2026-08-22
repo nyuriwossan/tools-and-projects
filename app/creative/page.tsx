@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { creativeGroups } from "../data";
+import { assetHref, pageHref } from "../site-path";
 
 export const metadata: Metadata = {
   title: "にゅりヲ｜AI創作工房",
@@ -15,13 +16,13 @@ export default function CreativePage() {
         本文へ移動
       </a>
       <header className="creative-header">
-        <a className="creative-brand" href="/" aria-label="ポータルのトップへ">
+        <a className="creative-brand" href={pageHref("/")} aria-label="ポータルのトップへ">
           <span>NYURIWO</span>
           <small>CREATIVE LAB / EST. 2026</small>
         </a>
         <nav aria-label="関連ページ">
           <a href="#collection">COLLECTION</a>
-          <a href="/education">教育向けツール</a>
+          <a href={pageHref("/education")}>教育向けツール</a>
         </nav>
       </header>
 
@@ -50,7 +51,7 @@ export default function CreativePage() {
             <div className="creative-author-frame">
               <span className="creative-frame-corner" aria-hidden="true" />
               <img
-                src="/creative-author-icon.png"
+                src={assetHref("/creative-author-icon.png")}
                 alt="青いブラキオサウルスの作者アイコン"
                 width="1254"
                 height="1254"
@@ -122,7 +123,7 @@ export default function CreativePage() {
           <p>ANOTHER COLLECTION</p>
           <div>
             <h2>教育支援ツールも公開しています。</h2>
-            <a href="/education">
+            <a href={pageHref("/education")}>
               EDUCATIONAL TOOLS <span aria-hidden="true">↗</span>
             </a>
           </div>
@@ -134,7 +135,7 @@ export default function CreativePage() {
           <strong>にゅりヲ</strong>
           <span>AI CREATIVE TOOLS &amp; ODD LITTLE PROJECTS</span>
         </div>
-        <a href="/">BACK TO PORTAL ↑</a>
+        <a href={pageHref("/")}>BACK TO PORTAL ↑</a>
       </footer>
     </div>
   );

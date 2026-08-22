@@ -39,18 +39,22 @@ pnpm exec vinext dev
 このサイトは `output: "export"` を使用しており、外部データやサーバー処理に依存しません。
 
 ```bash
-pnpm exec vinext build
+pnpm run build
 ```
 
-ビルド後の `out/` が、そのまま静的ホスティングへ配置できる成果物です。
+ビルド後の `dist/client/` が静的ホスティング向けの成果物です。
 
 ## GitHub Pagesで公開する
 
-1. GitHubリポジトリの **Settings → Pages** を開く
-2. GitHub Actionsでビルドし、生成された `out/` をPagesへアップロードする
-3. プロジェクトサイト（`https://ユーザー名.github.io/リポジトリ名/`）に置く場合は、公開パスに合わせて `next.config.ts` の `basePath` と `assetPrefix` を設定する
+`main` ブランチへのpushをきっかけに、`.github/workflows/deploy-pages.yml` が次を自動実行します。
 
-ユーザーサイトや独自ドメインのルートで公開する場合、追加のパス設定は不要です。
+1. 依存パッケージを固定バージョンでインストール
+2. `/tools-and-projects` を公開パスとして静的ビルド
+3. 生成された `dist/client/` をGitHub Pagesへ公開
+
+公開URL：<https://nyuriwossan.github.io/tools-and-projects/>
+
+GitHub Pages用の手動ビルドでは、`NEXT_PUBLIC_BASE_PATH=/tools-and-projects` と `NEXT_PUBLIC_SITE_URL=https://nyuriwossan.github.io/tools-and-projects/` を設定して `pnpm run build:pages` を実行します。
 
 ## ツールを追加・更新する
 

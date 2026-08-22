@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { pageHref } from "./site-path";
 
 export const metadata: Metadata = {
   title: "Tools & Projects",
@@ -37,7 +38,7 @@ export default function Home() {
         </section>
 
         <section className="entrance-grid" aria-label="コンテンツを選ぶ">
-          <a href="/education" className="entrance-card entrance-education">
+          <a href={pageHref("/education")} className="entrance-card entrance-education">
             <span className="entrance-number">01</span>
             <div className="entrance-body">
               <p className="entrance-label">EDUCATION / WORK</p>
@@ -54,7 +55,7 @@ export default function Home() {
             </span>
           </a>
 
-          <a href="/creative" className="entrance-card entrance-creative">
+          <a href={pageHref("/creative")} className="entrance-card entrance-creative">
             <span className="entrance-number">02</span>
             <div className="creative-orbit" aria-hidden="true">
               <span />
