@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { assetHref } from "./site-path";
+import { absoluteAssetUrl, siteUrl } from "./site-path";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  "https://tools-and-projects-hub.nyuriwo.chatgpt.site";
-const socialImageUrl = new URL(assetHref("/og.png"), siteUrl).toString();
+const socialImageUrl = absoluteAssetUrl("/og.png");
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),

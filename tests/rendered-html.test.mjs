@@ -98,3 +98,14 @@ test("教育ページから創作ページへのリンクがない", async () =>
     assert.ok(!html.includes(tool.href), `教育ページに創作リンク: ${tool.href}`);
   }
 });
+
+test("教育ページの共有用情報に創作側の文言・画像が含まれない", async () => {
+  const html = await read("dist/client/education.html");
+  const head = html.slice(0, html.indexOf("</head>"));
+
+  assert.doesNotMatch(head, /創作|にゅりヲ|creative/i);
+  assert.doesNotMatch(head, /\/og\.png/);
+  assert.match(head, /property="og:image" content="[^"]*\/og-education\.png"/);
+  assert.match(head, /name="twitter:image" content="[^"]*\/og-education\.png"/);
+  assert.match(head, /property="og:title" content="教育支援ツール"/);
+});

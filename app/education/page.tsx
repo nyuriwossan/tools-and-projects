@@ -1,9 +1,33 @@
 import type { Metadata } from "next";
 import { educationTools } from "../data";
+import { absoluteAssetUrl } from "../site-path";
+
+const educationDescription = "国語・道徳・授業設計を支える個人制作Webツール。";
+// 教育ページは創作ページと切り離して共有されるよう、
+// 共有用の文言・画像をポータル共通設定から上書きする
+const educationShareImage = {
+  url: absoluteAssetUrl("/og-education.png"),
+  width: 1200,
+  height: 630,
+  alt: "教育支援ツール — 授業づくりを、少し便利に。",
+};
 
 export const metadata: Metadata = {
   title: "教育支援ツール",
-  description: "国語・道徳・授業設計を支える個人制作Webツール。",
+  description: educationDescription,
+  openGraph: {
+    type: "website",
+    locale: "ja_JP",
+    title: "教育支援ツール",
+    description: educationDescription,
+    images: [educationShareImage],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "教育支援ツール",
+    description: educationDescription,
+    images: [educationShareImage.url],
+  },
 };
 
 export const dynamic = "force-static";
