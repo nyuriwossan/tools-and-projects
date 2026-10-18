@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { creativeGroups } from "../data";
+import { creativeCategoryCount, creativeGroups, creativeToolCount, pad2 } from "../data";
 import { assetHref, pageHref } from "../site-path";
 
 export const metadata: Metadata = {
   title: "にゅりヲ｜AI創作工房",
-  description: "プロンプト、LoRA、OC制作を支えるAI創作ツールポータル。",
+  description: "プロンプト、LoRA、OC制作、AIチャットを支えるAI創作ツールポータル。",
 };
 
 export const dynamic = "force-static";
@@ -38,7 +38,7 @@ export default function CreativePage() {
               <em>AI創作工房。</em>
             </h1>
             <p className="creative-lead">
-              プロンプト、LoRA、OC制作。
+              プロンプト、LoRA、OC制作、AIチャット。
               <br />
               少し偏っていて、だいぶ実用的な道具を集めました。
             </p>
@@ -79,15 +79,43 @@ export default function CreativePage() {
           <div className="creative-section-heading">
             <p>THE COLLECTION</p>
             <h2 id="collection-title">工房の道具</h2>
-            <span>9 TOOLS / 4 CATEGORIES</span>
+            <span>
+              {creativeToolCount} TOOLS / {creativeCategoryCount} CATEGORIES
+            </span>
           </div>
 
+          <nav className="creative-index" aria-label="カテゴリ目次">
+            <ol>
+              {creativeGroups.map((group, groupIndex) => (
+                <li key={group.id}>
+                  <a href={`#${group.id}`}>
+                    <span aria-hidden="true">{pad2(groupIndex + 1)}</span>
+                    {group.shortTitle}
+                    <small>
+                      {group.tools.length}
+                      <span className="visually-hidden">件</span>
+                    </small>
+                  </a>
+                </li>
+              ))}
+            </ol>
+          </nav>
+
           {creativeGroups.map((group, groupIndex) => (
-            <section className="creative-group" key={group.id} aria-labelledby={`${group.id}-title`}>
+            <section
+              className="creative-group"
+              id={group.id}
+              key={group.id}
+              aria-labelledby={`${group.id}-title`}
+            >
               <div className="creative-group-heading">
-                <span>{String(groupIndex + 1).padStart(2, "0")}</span>
+                <span>{pad2(groupIndex + 1)}</span>
                 <div>
                   <h3 id={`${group.id}-title`}>{group.title}</h3>
+                  <p className="creative-group-name">
+                    {group.shortTitle}
+                    <small>{group.tools.length} TOOLS</small>
+                  </p>
                   <p>{group.subtitle}</p>
                 </div>
               </div>
@@ -98,12 +126,14 @@ export default function CreativePage() {
                     <div className="creative-card-topline">
                       <span>{tool.label}</span>
                       <small aria-hidden="true">
-                        {String(groupIndex + 1).padStart(2, "0")}.
-                        {String(toolIndex + 1).padStart(2, "0")}
+                        {pad2(groupIndex + 1)}.{pad2(toolIndex + 1)}
                       </small>
                     </div>
                     <h4>{tool.title}</h4>
-                    <p>{tool.description}</p>
+                    {tool.alias ? (
+                      <p className="creative-card-alias">{tool.alias}</p>
+                    ) : null}
+                    <p className="creative-card-description">{tool.description}</p>
                     <a
                       href={tool.href}
                       target="_blank"

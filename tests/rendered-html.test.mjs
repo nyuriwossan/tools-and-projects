@@ -1,91 +1,100 @@
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-const templateRoot = new URL("../", import.meta.url);
-const previewRoot = new URL("../app/_sites-preview/", import.meta.url);
+// `pnpm test` は vinext build の後にこのファイルを実行し、
+// 書き出された静的HTMLとデータ定義を検査します。
 
-async function render() {
-  const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
-  const { default: worker } = await import(workerUrl.href);
+const root = new URL("../", import.meta.url);
+const read = (path) => readFile(new URL(path, root), "utf8");
 
-  return worker.fetch(
-    new Request("http://localhost/", {
-      headers: { accept: "text/html" },
-    }),
-    {
-      ASSETS: {
-        fetch: async () => new Response("Not found", { status: 404 }),
-      },
-    },
-    {
-      waitUntil() {},
-      passThroughOnException() {},
-    },
-  );
-}
+// Node 22.18以降は型注釈つきの .ts をそのまま読み込める
+const loadData = () => import("../app/data.ts");
 
-test("server-renders the starter loading skeleton", async () => {
-  const response = await render();
-  assert.equal(response.status, 200);
-  assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
+const siteOrigin = "https://nyuriwossan.github.io/";
 
-  const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
-  assert.match(html, /<title>Your site is taking shape<\/title>/i);
-  assert.match(html, /Building your site/);
-  assert.match(html, /Your site is taking shape/);
-  assert.match(
-    html,
-    /Your first version will appear here automatically when it’s ready\./,
-  );
-  assert.doesNotMatch(html, /Codex/);
-  assert.match(html, /react-loading-skeleton/);
-  assert.match(html, /role="status"/);
+test("創作ツールのデータが正しく登録されている", async () => {
+  const { creativeGroups, creativeToolCount, creativeCategoryCount } =
+    await loadData();
+
+  const tools = creativeGroups.flatMap((group) => group.tools);
+  assert.equal(creativeToolCount, tools.length);
+  assert.equal(creativeCategoryCount, creativeGroups.length);
+
+  const groupIds = creativeGroups.map((group) => group.id);
+  assert.equal(new Set(groupIds).size, groupIds.length, "カテゴリIDが重複");
+  for (const id of groupIds) {
+    assert.match(id, /^[a-z][a-z0-9-]*$/, `カテゴリIDの形式: ${id}`);
+  }
+
+  for (const group of creativeGroups) {
+    assert.ok(group.title && group.shortTitle && group.subtitle, group.id);
+    assert.ok(group.tools.length > 0, `空のカテゴリ: ${group.id}`);
+  }
+
+  const hrefs = tools.map((tool) => tool.href);
+  assert.equal(new Set(hrefs).size, hrefs.length, "同じURLが重複登録されている");
+  const titles = tools.map((tool) => tool.title);
+  assert.equal(new Set(titles).size, titles.length, "同じ名前が重複登録されている");
+
+  for (const tool of tools) {
+    assert.ok(tool.title && tool.description && tool.label, tool.href);
+    assert.ok(tool.href.startsWith(siteOrigin), `公開URLの形式: ${tool.href}`);
+    assert.ok(tool.href.endsWith("/"), `末尾スラッシュ: ${tool.href}`);
+    assert.ok(tool.description.length <= 80, `説明が長すぎる: ${tool.title}`);
+  }
 });
 
-test("keeps the loading skeleton scoped and disposable", async () => {
-  const [preview, css, page, layout, packageJson, files] = await Promise.all([
-    readFile(new URL("SkeletonPreview.tsx", previewRoot), "utf8"),
-    readFile(new URL("preview.css", previewRoot), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../package.json", import.meta.url), "utf8"),
-    readdir(previewRoot),
+test("AI Chat / Roleplay カテゴリに3ツールがまとまっている", async () => {
+  const { creativeGroups } = await loadData();
+  const chat = creativeGroups.find((group) => group.id === "ai-chat");
+  assert.ok(chat);
+  assert.deepEqual(
+    chat.tools.map((tool) => tool.href).sort(),
+    [
+      "https://nyuriwossan.github.io/chat-deco-workshop/",
+      "https://nyuriwossan.github.io/lorebook-lab/",
+      "https://nyuriwossan.github.io/plot-workshop/",
+    ],
+  );
+});
+
+test("教育ツールと創作ツールが混ざっていない", async () => {
+  const { creativeGroups, educationTools } = await loadData();
+  const creative = new Set(
+    creativeGroups.flatMap((group) => group.tools.map((tool) => tool.href)),
+  );
+  for (const tool of educationTools) {
+    assert.ok(!creative.has(tool.href), `両方に登録: ${tool.href}`);
+  }
+});
+
+test("創作ページに全ツール・正しい件数・目次が出力される", async () => {
+  const [html, { creativeGroups, creativeToolCount, creativeCategoryCount }] =
+    await Promise.all([read("dist/client/creative.html"), loadData()]);
+
+  assert.match(
+    html,
+    new RegExp(`${creativeToolCount}(?:<!-- -->)? TOOLS / (?:<!-- -->)?${creativeCategoryCount}(?:<!-- -->)? CATEGORIES`),
+  );
+
+  for (const group of creativeGroups) {
+    assert.ok(html.includes(`id="${group.id}"`), `カテゴリ: ${group.id}`);
+    assert.ok(html.includes(`href="#${group.id}"`), `目次: ${group.id}`);
+    for (const tool of group.tools) {
+      assert.ok(html.includes(`href="${tool.href}"`), `リンク: ${tool.title}`);
+    }
+  }
+});
+
+test("教育ページから創作ページへのリンクがない", async () => {
+  const [html, { creativeGroups }] = await Promise.all([
+    read("dist/client/education.html"),
+    loadData(),
   ]);
 
-  assert.deepEqual(files.sort(), ["SkeletonPreview.tsx", "preview.css"]);
-  assert.match(preview, /from "react-loading-skeleton"/);
-  assert.match(preview, /baseColor="#eceae7"/);
-  assert.match(preview, /highlightColor="#f9f8f6"/);
-  assert.match(preview, /duration=\{2\.8\}/);
-  assert.match(preview, /sites-skeleton-search-placeholder/);
-  assert.match(packageJson, /"react-loading-skeleton": "3\.5\.0"/);
-
-  const shellIndex = preview.indexOf('className="sites-skeleton-shell"');
-  const statusIndex = preview.indexOf('className="sites-skeleton-status"');
-  assert.ok(shellIndex >= 0 && statusIndex > shellIndex);
-  assert.match(css, /position:\s*fixed/);
-  assert.match(css, /inset:\s*0/);
-  assert.match(css, /opacity:\s*0\.52/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.doesNotMatch(css, /#020617|canvas|pets|progress/i);
-  assert.doesNotMatch(
-    preview,
-    /loading-spinner|status-mark|status-progress|canvas|cookie|random/i,
-  );
-
-  assert.match(page, /export const metadata:\s*Metadata/);
-  assert.match(page, /"codex-preview": "development"/);
-  assert.match(page, /<SkeletonPreview \/>/);
-  assert.match(layout, /title:\s*"Starter Project"/);
-  assert.doesNotMatch(layout, /codex-preview|_sites-preview|themeColor|\bViewport\b/);
-  assert.doesNotMatch(css, /(^|\s)(html|body)\s*\{/m);
-
-  await assert.rejects(
-    access(new URL("public/_sites-preview", templateRoot)),
-  );
+  assert.doesNotMatch(html, /href="[^"]*\/creative(?:\.html)?"/);
+  for (const tool of creativeGroups.flatMap((group) => group.tools)) {
+    assert.ok(!html.includes(tool.href), `教育ページに創作リンク: ${tool.href}`);
+  }
 });
