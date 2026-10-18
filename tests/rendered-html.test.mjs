@@ -152,3 +152,55 @@ test("教育ページとトップページに作者の活動先リンクがな�
     assert.doesNotMatch(html, /pixai\.art|zeta-ai\.io|x\.com\/nyuriwo/);
   }
 });
+
+test("各創作ツールのサムネイル画像・代替テキスト・用途ラベルがそろっている", async () => {
+  const { creativeGroups } = await loadData();
+  const { access } = await import("node:fs/promises");
+  const tools = creativeGroups.flatMap((group) => group.tools);
+  const sources = new Set();
+
+  for (const tool of tools) {
+    // 画像は任意だが、登録するならファイル・altが必須
+    if (tool.thumbnail) {
+      assert.match(tool.thumbnail.src, /^\/thumbnails\/[a-z0-9-]+\.webp$/, tool.title);
+      await access(new URL(`public${tool.thumbnail.src}`, root));
+      assert.ok(tool.thumbnail.alt.length >= 10, `altが短すぎる: ${tool.title}`);
+      assert.ok(!sources.has(tool.thumbnail.src), `同じ画像を使い回している: ${tool.title}`);
+      sources.add(tool.thumbnail.src);
+    }
+    if (tool.purpose) {
+      assert.ok(tool.purpose.length >= 6 && tool.purpose.length <= 20, `用途ラベルの長さ: ${tool.title}`);
+    }
+    assert.ok(tool.description.length <= 40, `カード説明は1行程度に: ${tool.title}`);
+  }
+});
+
+test("ツールカードは1枚につきリンク1つで、画像と安全な属性を持つ", async () => {
+  const [html, { creativeGroups }] = await Promise.all([
+    read("dist/client/creative.html"),
+    loadData(),
+  ]);
+  const cards = html.match(/<article class="creative-card">[\s\S]*?<\/article>/g) ?? [];
+  const tools = creativeGroups.flatMap((group) => group.tools);
+  assert.equal(cards.length, tools.length);
+
+  tools.forEach((tool, index) => {
+    const card = cards[index];
+    const anchors = card.match(/<a\b[^>]*>/g) ?? [];
+    assert.equal(anchors.length, 1, `リンクが入れ子・複数: ${tool.title}`);
+    assert.ok(anchors[0].includes(`href="${tool.href}"`), `リンク先: ${tool.title}`);
+    assert.match(anchors[0], /target="_blank"/);
+    assert.match(anchors[0], /rel="noopener noreferrer"/);
+    if (tool.thumbnail) {
+      const img = card.match(/<img\b[^>]*>/)?.[0] ?? "";
+      assert.ok(img.includes(tool.thumbnail.src), `画像の対応: ${tool.title}`);
+      assert.match(img, /loading="lazy"/);
+      assert.match(img, /width="960"/);
+      assert.match(img, /height="600"/);
+      assert.ok(img.includes(`alt="${tool.thumbnail.alt}"`), `alt: ${tool.title}`);
+    }
+    if (tool.purpose) {
+      assert.ok(card.includes(tool.purpose), `用途ラベル: ${tool.title}`);
+    }
+  });
+});

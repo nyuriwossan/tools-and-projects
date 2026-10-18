@@ -1028,42 +1028,152 @@ img {
   border: 0;
 }
 
-.creative-card {
-  position: relative;
-}
-
-/* カード全体をタップ領域にする（リンク要素は1つのまま） */
-.creative-card > a::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-}
-
 .creative-card-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
+  gap: 18px;
 }
 
 .creative-card {
-  min-height: 270px;
-  padding: clamp(23px, 3vw, 34px);
+  min-width: 0;
+}
+
+/* カード全体が1つのリンク */
+.creative-card-link {
+  height: 100%;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   border: 1px solid #4e3e45;
   background:
     linear-gradient(145deg, rgba(111, 38, 61, 0.1), transparent 55%),
     var(--creative-surface);
   box-shadow: 0 12px 34px rgba(0, 0, 0, 0.13);
+  color: var(--ivory);
+  text-decoration: none;
   transition: border-color 180ms ease, transform 180ms ease, background 180ms ease;
 }
 
-.creative-card:hover {
-  transform: translateY(-4px);
+.creative-card-link:hover {
+  transform: translateY(-3px);
   border-color: #826673;
   background:
     linear-gradient(145deg, rgba(111, 38, 61, 0.18), transparent 55%),
     #251f23;
+}
+
+.creative-page main .creative-card-link:focus-visible {
+  outline: 3px solid #e6b953;
+  outline-offset: 3px;
+}
+
+/* サムネイル：16:10で固定し、読み込み前後でレイアウトがずれないようにする */
+.creative-card-thumb {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  overflow: hidden;
+  border-bottom: 1px solid #4e3e45;
+  /* 画像が未登録・読み込み失敗のときに見える下地 */
+  background: var(--thumb-fallback);
+}
+
+.creative-card-thumb,
+.creative-card-thumb img {
+  --thumb-fallback:
+    repeating-linear-gradient(135deg, rgba(182, 154, 104, 0.05) 0 1px, transparent 1px 14px),
+    radial-gradient(circle at 70% 30%, rgba(111, 38, 61, 0.28), transparent 60%),
+    #1b171a;
+}
+
+/* 未登録・読み込み失敗のときに出す英字ラベル */
+.creative-card-thumb.is-empty::before,
+.creative-card-thumb img::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  transform: translateY(-50%);
+  color: rgba(209, 182, 130, 0.38);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(1rem, 2.2vw, 1.35rem);
+  letter-spacing: 0.18em;
+  text-align: center;
+}
+
+.creative-card-thumb img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: top center;
+  /* 読み込みに失敗したとき、代替テキストや破損アイコンを下地の上に出さない */
+  color: transparent;
+  filter: saturate(0.92) brightness(0.94);
+  transition: transform 260ms ease, filter 260ms ease;
+}
+
+/* 読み込みに失敗したときだけ描かれる（破損アイコンを隠し、未登録時と同じ見た目にする） */
+.creative-card-thumb img::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--thumb-fallback);
+}
+
+/* 画像の上端を少し沈め、ページの暗さになじませる */
+.creative-card-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg, transparent 52%, rgba(18, 14, 17, 0.55));
+  pointer-events: none;
+}
+
+.creative-card-link:hover .creative-card-thumb img {
+  transform: scale(1.025);
+  filter: saturate(1) brightness(1);
+}
+
+.creative-card-thumb-empty {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1;
+  padding: 3px 8px;
+  border: 1px solid rgba(182, 154, 104, 0.35);
+  color: var(--creative-muted);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+/* 画像に重ねる用途ラベル（HTMLの文字なので後から編集できる） */
+.creative-card-purpose {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  z-index: 1;
+  max-width: calc(100% - 24px);
+  padding: 6px 11px 6px 10px;
+  border-left: 2px solid var(--gold);
+  background: rgba(18, 14, 17, 0.86);
+  color: #f3ece2;
+  font-size: 0.78rem;
+  font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: 0.02em;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.creative-card-body {
+  flex: 1 1 auto;
+  padding: 18px 22px 16px;
+  display: flex;
+  flex-direction: column;
 }
 
 .creative-card-topline {
@@ -1071,40 +1181,41 @@ img {
   justify-content: space-between;
   gap: 16px;
   color: var(--gold);
-  font-size: 0.53rem;
+  font-size: 0.56rem;
   font-weight: 800;
   letter-spacing: 0.16em;
 }
 
 .creative-card-topline small {
-  color: #725e67;
+  color: #8a7480;
   font-size: inherit;
 }
 
 .creative-card h4 {
-  margin: 32px 0 0;
+  margin: 10px 0 0;
   font-family: var(--font-jp-serif);
-  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  font-size: clamp(1.18rem, 1.7vw, 1.45rem);
   font-weight: 500;
+  line-height: 1.4;
 }
 
 .creative-card-alias {
-  margin: 6px 0 0;
+  margin: 4px 0 0;
   color: var(--gold);
   font-size: 0.68rem;
   letter-spacing: 0.08em;
 }
 
 .creative-card-description {
-  margin: 16px 0 28px;
-  color: var(--creative-muted);
-  font-size: 0.78rem;
-  line-height: 1.85;
+  margin: 8px 0 16px;
+  color: #b3a9ae;
+  font-size: 0.8rem;
+  line-height: 1.75;
 }
 
-.creative-card > a {
+.creative-card-open {
   margin-top: auto;
-  padding-top: 14px;
+  padding-top: 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1113,7 +1224,15 @@ img {
   font-size: 0.6rem;
   font-weight: 800;
   letter-spacing: 0.16em;
-  text-decoration: none;
+}
+
+.creative-card-open span {
+  transition: transform 180ms ease;
+}
+
+.creative-card-link:hover .creative-card-open span,
+.creative-card-link:focus-visible .creative-card-open span {
+  transform: translate(2px, -2px);
 }
 
 .creative-education-link {
@@ -1460,33 +1579,36 @@ img {
   }
 
   .creative-card-grid {
-    gap: 12px;
+    gap: 16px;
   }
 
-  .creative-card {
-    min-height: 0;
-    padding: 20px 20px 16px;
+  .creative-card-body {
+    padding: 16px 18px 12px;
   }
 
   .creative-card h4 {
-    margin-top: 16px;
-    font-size: 1.28rem;
-    line-height: 1.4;
+    font-size: 1.24rem;
   }
 
   .creative-card-description {
-    margin: 10px 0 18px;
-    font-size: 0.82rem;
-    line-height: 1.8;
+    margin: 6px 0 12px;
+    font-size: 0.84rem;
+    line-height: 1.7;
   }
 
-  .creative-card > a {
-    min-height: 44px;
-    padding-top: 10px;
+  .creative-card-purpose {
+    left: 10px;
+    bottom: 10px;
+    font-size: 0.8rem;
+  }
+
+  .creative-card-open {
+    min-height: 40px;
+    padding-top: 8px;
     font-size: 0.64rem;
   }
 
-  .creative-card:hover {
+  .creative-card-link:hover {
     transform: none;
   }
 }

@@ -194,29 +194,64 @@ export default function CreativePage() {
               </div>
 
               <div className="creative-card-grid">
-                {group.tools.map((tool, toolIndex) => (
-                  <article className="creative-card" key={tool.href}>
-                    <div className="creative-card-topline">
-                      <span>{tool.label}</span>
-                      <small aria-hidden="true">
-                        {pad2(groupIndex + 1)}.{pad2(toolIndex + 1)}
-                      </small>
-                    </div>
-                    <h4>{tool.title}</h4>
-                    {tool.alias ? (
-                      <p className="creative-card-alias">{tool.alias}</p>
-                    ) : null}
-                    <p className="creative-card-description">{tool.description}</p>
-                    <a
-                      href={tool.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      aria-label={`${tool.title}を新しいタブで開く`}
-                    >
-                      OPEN TOOL <span aria-hidden="true">↗</span>
-                    </a>
-                  </article>
-                ))}
+                {group.tools.map((tool, toolIndex) => {
+                  const number = `${pad2(groupIndex + 1)}.${pad2(toolIndex + 1)}`;
+                  const descriptionId = `tool-${group.id}-${toolIndex + 1}-description`;
+                  return (
+                    <article className="creative-card" key={tool.href}>
+                      {/* カード全体を1つのリンクにする（中にリンクを入れ子にしない） */}
+                      <a
+                        className="creative-card-link"
+                        href={tool.href}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        aria-label={`${tool.title}を新しいタブで開く`}
+                        aria-describedby={descriptionId}
+                      >
+                        <div
+                          className={`creative-card-thumb${tool.thumbnail ? "" : " is-empty"}`}
+                          data-label={tool.label}
+                        >
+                          {tool.thumbnail ? (
+                            <img
+                              src={assetHref(tool.thumbnail.src)}
+                              alt={tool.thumbnail.alt}
+                              data-label={tool.label}
+                              width="960"
+                              height="600"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          ) : (
+                            <span className="creative-card-thumb-empty" aria-hidden="true">
+                              画像準備中
+                            </span>
+                          )}
+                          {tool.purpose ? (
+                            <span className="creative-card-purpose">{tool.purpose}</span>
+                          ) : null}
+                        </div>
+
+                        <div className="creative-card-body">
+                          <div className="creative-card-topline">
+                            <span>{tool.label}</span>
+                            <small aria-hidden="true">{number}</small>
+                          </div>
+                          <h4>{tool.title}</h4>
+                          {tool.alias ? (
+                            <p className="creative-card-alias">{tool.alias}</p>
+                          ) : null}
+                          <p className="creative-card-description" id={descriptionId}>
+                            {tool.description}
+                          </p>
+                          <span className="creative-card-open" aria-hidden="true">
+                            OPEN TOOL <span>↗</span>
+                          </span>
+                        </div>
+                      </a>
+                    </article>
+                  );
+                })}
               </div>
             </section>
           ))}
