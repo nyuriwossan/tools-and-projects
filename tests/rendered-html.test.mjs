@@ -109,3 +109,46 @@ test("教育ページの共有用情報に創作側の文言・画像が含ま�
   assert.match(head, /name="twitter:image" content="[^"]*\/og-education\.png"/);
   assert.match(head, /property="og:title" content="教育支援ツール"/);
 });
+
+test("作者紹介欄に活動先リンク3件が正しく出力される", async () => {
+  const [html, { authorLinks }] = await Promise.all([
+    read("dist/client/creative.html"),
+    loadData(),
+  ]);
+
+  assert.deepEqual(
+    authorLinks.map((link) => link.href),
+    [
+      "https://pixai.art/@nyuriwo",
+      "https://zeta-ai.io/@nyuriwossan?share_id=p2sxfxagu",
+      "https://x.com/nyuriwo_ssan?s=11&t=5dVi2HGlu-DC1pLqi3RZCg",
+    ],
+  );
+
+  const authorBlock = html.slice(
+    html.indexOf('class="creative-author"'),
+    html.indexOf('class="creative-manifesto"'),
+  );
+  assert.ok(authorBlock.includes("THE MAKER"));
+  assert.ok(authorBlock.includes("にゅりヲ"));
+  assert.ok(authorBlock.includes("工具と恐竜と、創作の寄り道。"));
+  assert.ok(authorBlock.includes("creative-author-icon.png"));
+
+  for (const link of authorLinks) {
+    const href = link.href.replaceAll("&", "&amp;");
+    const tag = authorBlock.match(new RegExp(`<a[^>]*href="${href.replace(/[.?]/g, "\\$&")}"[^>]*>`));
+    assert.ok(tag, `リンクがない: ${link.service}`);
+    assert.match(tag[0], /target="_blank"/);
+    assert.match(tag[0], /rel="noopener noreferrer"/);
+  }
+});
+
+test("教育ページとトップページに作者の活動先リンクがない", async () => {
+  const pages = await Promise.all([
+    read("dist/client/education.html"),
+    read("dist/client/index.html"),
+  ]);
+  for (const html of pages) {
+    assert.doesNotMatch(html, /pixai\.art|zeta-ai\.io|x\.com\/nyuriwo/);
+  }
+});

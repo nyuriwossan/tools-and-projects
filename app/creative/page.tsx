@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
-import { creativeCategoryCount, creativeGroups, creativeToolCount, pad2 } from "../data";
+import type { ReactNode } from "react";
+import {
+  authorLinks,
+  creativeCategoryCount,
+  creativeGroups,
+  creativeToolCount,
+  pad2,
+  type AuthorLink,
+} from "../data";
 import { assetHref, pageHref } from "../site-path";
 
 export const metadata: Metadata = {
@@ -8,6 +16,50 @@ export const metadata: Metadata = {
 };
 
 export const dynamic = "force-static";
+
+/** 作者リンク用の小さな線画アイコン（公式ロゴは使わない） */
+function AuthorLinkIcon({ icon }: { icon: AuthorLink["icon"] }) {
+  const paths: Record<AuthorLink["icon"], ReactNode> = {
+    palette: (
+      <>
+        <path d="M12 3.5c-4.9 0-8.5 3.5-8.5 7.9 0 3.6 2.7 6.1 5.6 6.1 1.4 0 1.7-1 1.7-1.8 0-1.2 1-2 2.2-2h2.1c2.7 0 5.4-1.9 5.4-4.6 0-3.1-3.6-5.6-8.5-5.6Z" />
+        <circle cx="8" cy="10" r="1" />
+        <circle cx="11.5" cy="7.6" r="1" />
+        <circle cx="15.4" cy="8.6" r="1" />
+      </>
+    ),
+    chat: (
+      <>
+        <path d="M4.5 6.5a2 2 0 0 1 2-2h11a2 2 0 0 1 2 2v7.5a2 2 0 0 1-2 2H11l-4.2 3.3V16H6.5a2 2 0 0 1-2-2Z" />
+        <path d="M8.5 9h7M8.5 12h4.5" />
+      </>
+    ),
+    note: (
+      <>
+        <path d="M6.5 3.5h8l3 3v14h-11Z" />
+        <path d="M14.5 3.5v3h3M9 11h6M9 14h6M9 17h3.5" />
+      </>
+    ),
+  };
+
+  return (
+    <svg
+      className="creative-author-link-icon"
+      viewBox="0 0 24 24"
+      width="20"
+      height="20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {paths[icon]}
+    </svg>
+  );
+}
 
 export default function CreativePage() {
   return (
@@ -61,6 +113,27 @@ export default function CreativePage() {
               <p>THE MAKER</p>
               <h2>にゅりヲ</h2>
               <span>工具と恐竜と、創作の寄り道。</span>
+              <ul className="creative-author-links" aria-label="作者の活動先">
+                {authorLinks.map((link) => (
+                  <li key={link.href}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      aria-label={`${link.service}（${link.description}）を新しいタブで開く`}
+                    >
+                      <AuthorLinkIcon icon={link.icon} />
+                      <span className="creative-author-link-text">
+                        <strong>{link.service}</strong>
+                        <small>{link.description}</small>
+                      </span>
+                      <span className="creative-author-link-arrow" aria-hidden="true">
+                        ↗
+                      </span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
             </div>
           </aside>
         </section>

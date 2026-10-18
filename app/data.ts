@@ -212,6 +212,38 @@ export const creativeGroups: ToolGroup[] = [
   },
 ];
 
+export type AuthorLink = {
+  /** サービス名 */
+  service: string;
+  /** そこで見られるもの */
+  description: string;
+  href: string;
+  /** 表示する小さなアイコンの種類 */
+  icon: "palette" | "chat" | "note";
+};
+
+/** 創作ページの作者紹介欄に出す活動先（教育ページでは使わない） */
+export const authorLinks: AuthorLink[] = [
+  {
+    service: "PixAI",
+    description: "イラスト・LoRA",
+    href: "https://pixai.art/@nyuriwo",
+    icon: "palette",
+  },
+  {
+    service: "Zeta",
+    description: "AIキャラクター",
+    href: "https://zeta-ai.io/@nyuriwossan?share_id=p2sxfxagu",
+    icon: "chat",
+  },
+  {
+    service: "X",
+    description: "制作記録・お知らせ",
+    href: "https://x.com/nyuriwo_ssan?s=11&t=5dVi2HGlu-DC1pLqi3RZCg",
+    icon: "note",
+  },
+];
+
 /** 創作ツールの総数（登録データから自動計算） */
 export const creativeToolCount = creativeGroups.reduce(
   (total, group) => total + group.tools.length,
